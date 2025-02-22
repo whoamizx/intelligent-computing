@@ -44,26 +44,26 @@ class RMSNorm(torch.nn.Module):
         super().__init__()
         self.eps = eps
         #TODO: 初始化可学习的参数 weight，维度为 dim
-        self.weight =____________________________________________________
+        self.weight = nn.Parameter(torch.ones(dim))
 
     def _norm(self, x):
         #TODO:  计算RMS 归一化
-        return ____________________________________________________
+        return torch.sqrt(torch.mean(x**2, dim=-1, keepdim=True) + self.eps)
 
     def forward(self, x):
         #TODO：执行 RMS 归一化，并将结果的数据类型设为与输入张量 x 一致
-        output = ____________________________________________________
+        output = x / self._norm(x)
         return output * self.weight
 
 
 def precompute_freqs_cis(dim: int, end: int, theta: float = 10000.0):
     freqs = 1.0 / (theta ** (torch.arange(0, dim, 2)[: (dim // 2)].float() / dim))
     #TODO：创建建了一个张量 t，包含从 0 到 end - 1 的整数值，并根据 freqs 的设备来设置设备属性。
-    t = ________________________________________________________________
+    t = torch.arange(end, device=freqs.device).float()
     #TODO：将 t 和 freqs 的值计算出外积
-    freqs = ________________________________________________________________
+    freqs = freqs.view(1, -1) * t.view(-1, 1)
     #TODO：将频率值转换为复数形式的张量，其中每个元素表示一个复数，其幅度为 1，角度由 freqs 张量给出
-    freqs_cis = ________________________________________________________________
+    freqs_cis = torch.cos(freqs), torch.sin(freqs)
     return freqs_cis
 
 
