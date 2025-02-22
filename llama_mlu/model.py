@@ -86,7 +86,7 @@ def apply_rotary_emb(
     xq_ = torch.view_as_complex(xq.float().reshape(*xq.shape[:-1], -1, 2))
     xk_ = torch.view_as_complex(xk.float().reshape(*xk.shape[:-1], -1, 2))
     #TODO: 将旋转频率张量调整为与输入张量xq_广播兼容的形状
-    freqs_cis = __________________________________________
+    freqs_cis = reshape_for_broadcast(freqs_cis, xq_)
     xq_out = torch.view_as_real(xq_ * freqs_cis).flatten(3)
     xk_out = torch.view_as_real(xk_ * freqs_cis).flatten(3)
     return xq_out.type_as(xq).to(device), xk_out.type_as(xk).to(device)
@@ -169,13 +169,13 @@ class Attention(nn.Module):
     ):
         bsz, seqlen, _ = x.shape
         #TODO: 获取Q、K、V
-        xq, xk, xv = _________________________________________________
+        xq, xk, xv = self.wq(x), self.wk(x),self.wv(x)
 
         xq = xq.view(bsz, seqlen, self.n_local_heads, self.head_dim)
         xk = xk.view(bsz, seqlen, self.n_local_kv_heads, self.head_dim)
         xv = xv.view(bsz, seqlen, self.n_local_kv_heads, self.head_dim)
         #TODO: 对Q和K应用旋转嵌入
-        xq, xk = __________________________________________________
+        xq, xk = xq, xk = apply_rotary_emb(xq, xk, freqs_cis)
 
         self.cache_k = self.cache_k.to(xq)
         self.cache_v = self.cache_v.to(xq)
@@ -194,13 +194,14 @@ class Attention(nn.Module):
         keys = keys.transpose(1, 2)
         values = values.transpose(1, 2)
         #TODO: 根据注意力机制的公式计算查询张量 xq 与键张量 keys 的点积注意力得分,并进行缩放
-        scores = ___________________________________________________________
+        scores = torch.matmul(xq, keys.transpose(-2, -1))
+        scores = scores / math.sqrt(self.head_dim)
         if mask is not None:
             scores = scores + mask  # (bs, n_local_heads, seqlen, cache_len + seqlen)
         #TODO:使用 softmax 函数将注意力分数 scores 沿着最后一个维度进行归一化，并将结果转换为与输入张量 xq 相同的数据类型以获得注意力权重
-        scores = ___________________________________________________________
+        scores = F.softmax(scores, dim=-1)
         #TODO: 将注意力权重与值相乘，得到最终输出
-        output = ______________________________________________________ # (bs, n_local_heads, seqlen, head_dim)
+        output =  torch.matmul(scores, values) # (bs, n_local_heads, seqlen, head_dim)
         output = output.transpose(1, 2).contiguous().view(bsz, seqlen, -1)
         return self.wo(output)
 
