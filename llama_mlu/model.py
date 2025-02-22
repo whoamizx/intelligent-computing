@@ -233,7 +233,7 @@ class FeedForward(nn.Module):
 
     def forward(self, x):
         #TODO: 补全前馈神经网络的前向传播过程
-        return _____________________________________________________
+        return self.w2(F.silu(self.w1(x)) * self.w3(x))
 
 
 class TransformerBlock(nn.Module):
@@ -243,9 +243,9 @@ class TransformerBlock(nn.Module):
         self.dim = args.dim
         self.head_dim = args.dim // args.n_heads
         #TODO: 添加注意力层
-        self.attention = ___________________________________________
+        self.attention = self.attention = Attention(args)
         #TODO: 创建前馈网络层
-        self.feed_forward = _________________________(
+        self.feed_forward = FeedForward(
             dim=args.dim,
             hidden_dim=4 * args.dim,
             multiple_of=args.multiple_of,
@@ -253,8 +253,8 @@ class TransformerBlock(nn.Module):
         )
         self.layer_id = layer_id
         #TODO:添加RMS归一化
-        self.attention_norm = ___________________________________________
-        self.ffn_norm = ___________________________________________
+        self.attention_norm = RMSNorm(args.dim)
+        self.ffn_norm = RMSNorm(args.dim)
 
     def forward(
         self,
@@ -281,17 +281,19 @@ class Transformer(nn.Module):
             params.vocab_size, params.dim, init_method=lambda x: x,
         )
         #TODO: 创建PyTorch 中用于存储子模块的容器
-        self.layers = _______________________________________________
+        self.layers = nn.ModuleList(
+            [TransformerBlock(layer_id, params) for layer_id in range(params.n_layers)]
+        )
         for layer_id in range(params.n_layers):
             #TODO：将 TransformerBlock 的层添加到模型的层列表中。
             _______________________________________________
         #TODO: 初始化RMS归一化层
-        self.norm = _______________________________________________
+        self.norm = RMSNorm(params.dim)
         self.output = ColumnParallelLinear(
             params.dim, params.vocab_size, bias=False, init_method=lambda x: x
         )
         #调用函数计算用于多头自注意力机制中的频率值。
-        self.freqs_cis = _______________________(
+        self.freqs_cis = precompute_freqs_cis(
             self.params.dim // self.params.n_heads,
             self.params.max_seq_len * 2,
             params.rope_theta,
@@ -301,11 +303,14 @@ class Transformer(nn.Module):
     def forward(self, tokens: torch.Tensor, start_pos: int):
         _bsz, seqlen = tokens.shape
         #TODO：获取 tokens的embeddings
-        h = ________________________________________________________
+        h = self.tok_embeddings(tokens)
         #TODO: 将 self.freqs_cis 张量移动到 MLU 或 CPU 设备上，以便在该设备上进行后续计算
-        self.freqs_cis = ________________________________________________________
+        self.freqs_cis = (self.freqs_cis[0].to(device), self.freqs_cis[1].to(device))
         #TODO：从 self.freqs_cis 中提取一个长度为 seqlen 的子张量，其初始位置为start_pos
-        freqs_cis =________________________________________________________
+        freqs_cis =(
+            self.freqs_cis[0][start_pos : start_pos + seqlen],
+            self.freqs_cis[1][start_pos : start_pos + seqlen],
+        )
 
         mask = None
         if seqlen > 1:
