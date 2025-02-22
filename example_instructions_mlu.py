@@ -18,7 +18,13 @@ def main(
     max_gen_len: Optional[int] = None,
 ):
     #TODO: 使用LLAMA模型构建生成器
-    generator = ______________________________________________________
+    generator = Llama(
+        ckpt_dir,
+        tokenizer_path,
+        max_seq_len=max_seq_len,
+        max_batch_size=max_batch_size,
+        max_gen_len=max_gen_len,
+    )
 
     instructions = [
         [
@@ -45,7 +51,12 @@ def main(
         ],
     ]
     #TODO: 使用LLAMA模型生成对话文本
-    results = _____________________________________________
+    results = generator.chat_completion(
+        instructions,
+        temperature=temperature,
+        top_p=top_p,
+        max_gen_len=max_gen_len,
+    )
 
     for instruction, result in zip(instructions, results):
         for msg in instruction:
