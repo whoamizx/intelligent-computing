@@ -131,7 +131,7 @@ class Llama:
         #TODO: 调用Transformer 模型
         model =  Transformer(model_args)
         #TODO：加载模型的参数字典
-        model.load_state_dict(checkpoint)
+        model.load_state_dict(checkpoint, strict=False)
         print("TRANSFORMER MODEL PASS!")
         #add start
         #print(device)
@@ -251,11 +251,13 @@ class Llama:
             max_gen_len = self.model.params.max_seq_len - 1
         prompt_tokens = [self.tokenizer.encode(x, bos=True, eos=False) for x in prompts]
         #TODO: 调用 generate 方法生成文本
-        generation_tokens, generation_logprobs = self.generate(prompt_tokens, max_gen_len, temperature, top_p, logprobs)
+        generation_tokens, generation_logprobs = self.generate(
+            prompt_tokens, max_gen_len, temperature, top_p, logprobs
+        )
         if logprobs:
             assert generation_logprobs is not None
             return [
-                {TCOMPLETION
+                {
                     "generation": self.tokenizer.decode(t),
                     "tokens": [self.tokenizer.token_piece(x) for x in t],
                     "logprobs": logprobs_i,
