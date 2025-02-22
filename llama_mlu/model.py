@@ -286,7 +286,7 @@ class Transformer(nn.Module):
         )
         for layer_id in range(params.n_layers):
             #TODO：将 TransformerBlock 的层添加到模型的层列表中。
-            _______________________________________________
+            self.layers.append(TransformerBlock(layer_id, params))
         #TODO: 初始化RMS归一化层
         self.norm = RMSNorm(params.dim)
         self.output = ColumnParallelLinear(
