@@ -86,7 +86,10 @@ def apply_rotary_emb(
     xq_ = torch.view_as_complex(xq.float().reshape(*xq.shape[:-1], -1, 2))
     xk_ = torch.view_as_complex(xk.float().reshape(*xk.shape[:-1], -1, 2))
     #TODO: 将旋转频率张量调整为与输入张量xq_广播兼容的形状
-    freqs_cis = reshape_for_broadcast(freqs_cis, xq_)
+    cos, sin = freqs_cis
+    cos = reshape_for_broadcast(cos, xq_)
+    sin = reshape_for_broadcast(sin, xq_)
+    freqs_cis = torch.view_as_complex(torch.stack([cos, sin], dim=-1))
     xq_out = torch.view_as_real(xq_ * freqs_cis).flatten(3)
     xk_out = torch.view_as_real(xk_ * freqs_cis).flatten(3)
     return xq_out.type_as(xq).to(device), xk_out.type_as(xk).to(device)

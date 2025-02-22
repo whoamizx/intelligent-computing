@@ -16,13 +16,7 @@ def main(
     max_batch_size: int = 4,
 ):
     #TODO:使用LLAMA模型构建生成器
-    generator = Llama(
-        ckpt_dir, 
-        tokenizer_path, 
-        max_seq_len=max_seq_len, 
-        max_batch_size=max_batch_size, 
-        max_gen_len=max_gen_len
-    )
+    generator = Llama.build(ckpt_dir, tokenizer_path, max_seq_len, max_batch_size)
 
     prompts = [
         '''def remove_non_ascii(s: str) -> str:
