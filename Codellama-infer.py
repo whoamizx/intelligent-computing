@@ -4,7 +4,7 @@ import torch
 import torch_mlu
 
 #TODO:设置模型路径,对CodeLlama-7b-hf或CodeLlama-13b-Instruct-hf模型进行加载测试
-model_id= 'CodeLlama-7b-hf'
+model_id= '/workspace/model/favorite/large-scale-models/model-v1/CodeLlama-7b'
 #TODO：利用transformers库函数从预训练模型标识符model_id加载分词器tokenizer
 tokenizer= AutoTokenizer.from_pretrained(model_id)
 #TODO:利用transformers库函数从预训练模型加载自回归语言模型,配置模型的数据类型为torch.float16、自动选择设备映射，并关闭安全张量选项
