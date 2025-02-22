@@ -16,8 +16,8 @@ from fairscale.nn.model_parallel.layers import (
 )
 from torch import nn
 #TODO:检查是否有 MLU设备可用，如果可用，则将设备类型设置为 "mlu"
-if ___________________________________________
-    device = _________________________________
+if torch_mlu.is_available():
+    device = device = "mlu"
 elif torch.backends.mps.is_available():
     device = "mps"
 else:
